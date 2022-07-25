@@ -1,0 +1,141 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<main class="home">
+  <section class="hero-section text-center">
+    <div class="container container--narrow">
+      <div class="hero-section__box">
+        <h2>CONNECT WITH <span>DEVELOPERS</span></h2>
+        <h2>FROM AROUND THE WORLD</h2>
+      </div>
+
+      <div class="hero-section__search">
+
+        <form id="searchForm" class="form" action="{% url 'profiles' %}" method="get">
+          {% csrf_token %}
+          <div class="form__field">
+            <label for="formInput#search">Search Developers </label>
+            <input class="input input--text" id="formInput#search" type="text" name="search_query" 
+              value="{{ seach_query }}" placeholder="Search by developer name" />
+          </div>
+          <input type="text" value = "{{sort_by }}" name="sort_by" hidden>
+          <input class="btn btn--sub btn--lg" type="submit" value="Search" />
+        </form>
+
+        <form action="{% url 'profiles' %}">
+          <label> Sort By
+            <select name="sort_by" id="formInput#sort-by" value="{{ sort_by }}" onchange="this.form.submit()">
+              {% if sort_by == "-review_count" %}
+              <option value="-review_count">Most Reviews</option>
+              <option value="-project_count">Most Projects</option>
+              <option value="created">Oldest</option>
+              <option value="-created">Newset</option>   
+              {% elif sort_by == "-project_count" %}
+              <option value="-project_count">Most Projects</option>
+              <option value="-review_count">Most Reviews</option>
+              <option value="created">Oldest</option>
+              <option value="-created">Newset</option>   
+              {% elif sort_by == "created" %}
+              <option value="created">Oldest</option>
+              <option value="-review_count">Most Reviews</option>
+              <option value="-project_count">Most Projects</option>
+              <option value="-created">Newset</option>   
+              {% elif sort_by == "-created" %}
+              <option value="-created">Newset</option>   
+              <option value="-review_count">Most Reviews</option>
+              <option value="-project_count">Most Projects</option>
+              <option value="created">Oldest</option>
+              {% endif %}
+            </select>
+          </label>
+          <input type="text" name="search_query" value="{{ search_query }}" hidden>
+        </form>
+
+      </div>
+    </div>
+  </section>
+  <!-- Search Result: DevList -->
+
+  <section class="devlist">
+    <div class="container">
+      <div class="grid grid--three">
+        {% for profile in profiles %}
+        <div class="column card">
+          <div class="dev">
+            <a href="{% url 'user-profile' profile.id %}" class="card__body">
+              <div class="dev__profile">
+                <img class="avatar avatar--md" src="{{ profile.profile_image.url }}" alt="image" />
+                <div class="dev__meta">
+                  <h3>{{ profile.name }}</h3>
+                  {% if profile.short_intro %}
+                  <h5>{{ profile.short_intro|slice:"60" }}</h5>
+                  {% endif %}
+                </div>
+              </div>
+              <p class="dev__info">
+                {{ profile.bio|slice:"150" }}
+              </p>
+              <div class="dev__skills">
+                {% for skill in profile.skill_set.all|slice:"5" %}
+                <span class="tag tag--pill tag--main">
+                  <small>{{ skill.name }}</small>
+                </span>
+                {% endfor %}
+
+              </div>
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <div class="pagination">
+    <ul class="container">
+      {% if profiles.has_previous %}
+      <li><a href="?page={{ profiles.previous_page_number }}" class="btn pageLink" data-page="{{ profiles.previous_page_number }}">&#10094; Prev</a></li>
+      {% else %}
+      <li><a href="#" class="btn btn--disabled">&#10094; Prev</a></li>
+      {% endif %}
+
+      {% for num in paginator.page_range %}
+        {% if num == profiles.number %}
+          <li><a href="#" class="btn btn--sub pageLink" data-page="{{ num }}">{{ num }}</a></li>
+        {% else %}
+          <li><a href="?page={{ num }}" class="btn pageLink" data-page="{{ num }}">{{ num }}</a></li>
+        {% endif %}
+      {% endfor %}
+      
+      {% if profiles.has_next %}
+      <li><a href="?page={{ profiles.next_page_number }}" class="btn pageLink" data-page="{{ profiles.next_page_number }}">&#10095; Next</a></li>
+      {% else %}
+      <li><a href="#" class="btn btn--disabled">&#10095; Next</a></li>
+      {% endif %}
+    </ul>
+  </div>
+
+
+  <script type="text/javascript">
+    let searchForm = document.getElementById('searchForm')
+    let pageLinks = document.getElementsByClassName('pageLink')
+    
+    if (searchForm){
+
+      for (let pageLink of pageLinks){
+        pageLink.addEventListener('click', (event) => {
+          event.preventDefault();
+
+          nextPage = pageLink.dataset.page;
+          
+          searchForm.innerHTML += `<input value=${nextPage} name='page' hidden/>`;
+
+          searchForm.submit();
+        })
+        
+      }
+    }
+
+  </script>
+</main>
+{% endblock content %}
